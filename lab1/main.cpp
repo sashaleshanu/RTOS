@@ -24,8 +24,8 @@ struct Worker {
     char* text;
     char* output_text;
     char* pseudorandom_seq;
-    int down_index;
-    int top_index;
+    int first_index;
+    int last_index;
 };
 
 void* LCG(void* cmd_argv_ptr)
@@ -52,13 +52,13 @@ void* LCG(void* cmd_argv_ptr)
 void* encrypt(void * worker_ptr)
 {
     Worker* worker = static_cast<Worker*>(worker_ptr);
-    int top_index = worker->top_index;
-    int down_index = worker->down_index;
+    int current_index = worker->first_index;
+    int last_index = worker->last_index;
 
-    while(down_index < top_index)
+    while(current_index < last_index)
     {
-        worker->output_text[down_index] = worker->pseudorandom_seq[down_index] ^ worker->text[down_index];
-        down_index++;
+        worker->output_text[current_index] = worker->pseudorandom_seq[current_index] ^ worker->text[current_index];
+        current_index++;
     }
 
     int status = pthread_barrier_wait(worker->barrier);
@@ -68,6 +68,7 @@ void* encrypt(void * worker_ptr)
 
     return nullptr;
 }
+
 
 int main(int argc, char* argv[]) {
     if (argc != 13)
@@ -168,12 +169,12 @@ int main(int argc, char* argv[]) {
         worker->text = text;
         worker->output_text = output_text;
         worker->pseudorandom_seq = pseudorandom_seq;
-        worker->down_index = i * part_len;
+        worker->first_index = i * part_len;
 
         if (i == number_of_processors - 1)
-            worker->top_index = INPUT_SIZE;
+            worker->last_index = INPUT_SIZE;
         else
-            worker->top_index = worker->down_index + part_len;
+            worker->last_index = worker->first_index + part_len;
 
         workers.push_back(worker);
         pthread_create(&crypt_threads[i], NULL, encrypt, worker);
