@@ -18,20 +18,15 @@ static iofunc_attr_t             attr;
 
 bbs::BBSParams* params;
 std::uint32_t current_element;
-#define count_bits sizeof(std::uint32_t) // == 32
 
 std::uint32_t generate_element() {
-	std::uint32_t middle_element = 0;
+	std::uint32_t count_bits = 32;
 	std::uint32_t result = 0;
-	bool bit = false;
-	std::uint32_t place = 1;
+	std::uint32_t M = params->p * params->q;
 
 	for (int i = 0; i < count_bits; i++) {
-		middle_element = current_element * current_element % (params->p * params->q);
-		bit = middle_element % 2;
-		result += place * bit;
-		current_element = middle_element;
-		place = place * 2;
+		current_element = current_element * current_element % M;
+		result = (result << 1) | (current_element & 1);
 	}
 	return result;
 }
@@ -56,7 +51,7 @@ int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, RESMGR_OCB_T *ocb) {
 			break;
 		case GET_ELEMENT:
 			*reinterpret_cast<uint32_t*>(rx_data) = generate_element();
-			//std::cout  << " data : " << (*(std::uint32_t*)rx_data) << std::endl;
+			std::cout  << " data : " << (*(std::uint32_t*)rx_data) << std::endl;
 			nbytes = sizeof(std::uint32_t);
 			break;
 		// 3) Если мы не знаем такой команды, отвергнуть ее

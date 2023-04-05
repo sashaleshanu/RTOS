@@ -51,6 +51,7 @@ int main( int argc, char **argv )
     		std::cerr << "E: GET_ELEMENT error: " << strerror(error);
     		exit(EXIT_FAILURE);
     	}
+    	i++;
     	if (i == 1024) {
     		i = 0;
     	}
