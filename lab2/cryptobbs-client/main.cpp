@@ -19,10 +19,10 @@ void signal_handler(int signal)
 
 int main( int argc, char **argv ) 
 {
-    std::cout << "Running client..." << std::endl;
-    std::signal(SIGINT, signal_handler);
+	std::cout << "Running client..." << std::endl;
+	std::signal(SIGINT, signal_handler);
     // open a connection to the server (fd == coid)
-    int fd = open("/dev/cryptobbs", O_RDWR);
+    int fd = open("/dev/cryptobbs", O_RDONLY);
     if(fd < 0)
     {
         std::cerr << "E: unable to open server connection: " << strerror(errno) << std::endl;
@@ -42,9 +42,8 @@ int main( int argc, char **argv )
     }
 
     std::uint32_t* values_from_server = new std::uint32_t[1024];
-    std::uint32_t element = 5;
+    std::uint32_t element = 0;
     int i = 0;
-
 
     while (!signal_status) {
     	error = devctl(fd, GET_ELEMENT, &element, sizeof(std::uint32_t), NULL);

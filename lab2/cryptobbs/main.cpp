@@ -36,25 +36,28 @@ std::uint32_t generate_element() {
 	return result;
 }
 
-int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, iofunc_ocb_t *ocb) {
-	int sts;
+int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, RESMGR_OCB_T *ocb) {
+	int sts, nbytes;
+
 	// 1) Проверить, не является ли это обычным
 	// POSIX-совместимым devctl()
 	if ((sts = iofunc_devctl_default(ctp, msg, ocb)) != _RESMGR_DEFAULT) {
 	 return (sts);
 	}
+	sts = nbytes = 0;
 
-	std::uint32_t res = 0;
+	void* rx_data = _DEVCTL_DATA(msg->i);
+
 	// 2) Узнать, что за команда, и отработать ее
-	void* data = _DEVCTL_DATA(msg->i); //  указатель на местоположение данных
 	switch (msg->i.dcmd) {
 		case SET_GEN_PARAMS:
-			params = reinterpret_cast<bbs::BBSParams*>(data);
+			params = reinterpret_cast<bbs::BBSParams*>(rx_data);
 			current_element = params->seed;
 			break;
 		case GET_ELEMENT:
-			res = generate_element();
-			memcpy(data, &res, sizeof(std::uint32_t));
+			*reinterpret_cast<uint32_t*>(rx_data) = generate_element();
+			//std::cout  << " data : " << (*(std::uint32_t*)rx_data) << std::endl;
+			nbytes = sizeof(std::uint32_t);
 			break;
 		// 3) Если мы не знаем такой команды, отвергнуть ее
 		default:
@@ -62,9 +65,12 @@ int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, iofunc_ocb_t *ocb) {
 	}
 
 	// 4) Сказать клиенту, что все отработано
-	memset(&(msg->o), 0, sizeof(msg->o));
-	SETIOV(ctp->iov, &msg->o, sizeof(msg->o));
-	return (_RESMGR_NPARTS(1));
+	memset(&msg->o, 0, sizeof(msg->o));
+	msg->o.ret_val = sts;
+	msg->o.nbytes = nbytes;
+	//SETIOV(ctp->iov, &msg->o, sizeof(msg->o) + msg->o.nbytes);
+	//return (_RESMGR_NPARTS(1));
+	return(_RESMGR_PTR(ctp, &msg->o, sizeof(msg->o) + nbytes));
 }
 
 
