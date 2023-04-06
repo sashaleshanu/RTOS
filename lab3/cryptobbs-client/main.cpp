@@ -12,15 +12,15 @@ int signal_status = 0;
 
 void signal_handler(int signal)
 {
-    signal_status = signal;
-    std::cout << "Signal " << signal << " received" << std::endl;
+	signal_status = signal;
+	std::cout << "Signal " << signal << " received" << std::endl;
 }
 
 
 int main( int argc, char **argv ) 
 {
-    std::cout << "Running client..." << std::endl;
-    std::signal(SIGINT, signal_handler);
+	std::cout << "Running client..." << std::endl;
+	std::signal(SIGINT, signal_handler);
     // open a connection to the server (fd == coid)
     int fd = open("/dev/cryptobbs", O_RDONLY);
     if(fd < 0)
